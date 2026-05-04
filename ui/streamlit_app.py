@@ -30,25 +30,25 @@ st.markdown(
     }
 
     .block-container {
-        padding-top: 1.25rem;
+        padding-top: 1rem;
         padding-left: 1rem;
         padding-right: 1rem;
-        max-width: 780px;
+        max-width: 760px;
     }
 
     .hero {
         background: #ffffff;
         border: 1px solid #eee4d4;
-        border-radius: 24px;
-        padding: 28px 22px;
+        border-radius: 22px;
+        padding: 22px 18px;
         box-shadow: 0 10px 28px rgba(31, 60, 136, 0.08);
-        margin-bottom: 22px;
+        margin-bottom: 18px;
         text-align: center;
     }
 
     .brand-title {
         color: #1f3c88;
-        font-size: 42px;
+        font-size: 38px;
         font-weight: 850;
         margin: 0;
         line-height: 1.15;
@@ -56,31 +56,31 @@ st.markdown(
 
     .brand-subtitle {
         color: #555;
-        font-size: 17px;
-        margin-top: 12px;
-        line-height: 1.55;
+        font-size: 16px;
+        margin-top: 10px;
+        line-height: 1.5;
     }
 
     .verse-card {
         background: #fffaf0;
         border-left: 5px solid #c9a227;
-        padding: 16px 18px;
+        padding: 14px 16px;
         border-radius: 16px;
         color: #333;
-        font-size: 15.5px;
+        font-size: 15px;
         line-height: 1.55;
-        margin-bottom: 16px;
+        margin-bottom: 14px;
     }
 
     .safe-card {
         background: #eef3ff;
         border: 1px solid #dce6ff;
         border-radius: 16px;
-        padding: 16px 18px;
+        padding: 14px 16px;
         color: #333;
-        font-size: 15.5px;
+        font-size: 15px;
         line-height: 1.55;
-        margin-bottom: 18px;
+        margin-bottom: 16px;
     }
 
     .prompt-title {
@@ -88,17 +88,6 @@ st.markdown(
         font-weight: 700;
         margin-top: 10px;
         margin-bottom: 8px;
-    }
-
-    .question-chip {
-        background: #ffffff;
-        border: 1px solid #e6dfd2;
-        border-radius: 999px;
-        padding: 10px 14px;
-        margin: 5px 0;
-        font-size: 14px;
-        color: #333;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.03);
     }
 
     .donation-box {
@@ -119,35 +108,31 @@ st.markdown(
         line-height: 1.5;
     }
 
-    div[data-testid="stChatMessage"] {
-        border-radius: 18px;
-        padding: 6px;
-    }
-
     @media (max-width: 600px) {
         .block-container {
-            padding-left: 0.8rem;
-            padding-right: 0.8rem;
-            padding-top: 0.8rem;
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+            padding-top: 0.7rem;
         }
 
         .hero {
-            padding: 22px 16px;
-            border-radius: 20px;
+            padding: 18px 14px;
+            border-radius: 18px;
+            margin-bottom: 14px;
         }
 
         .brand-title {
-            font-size: 31px;
+            font-size: 28px;
         }
 
         .brand-subtitle {
-            font-size: 15px;
+            font-size: 14px;
         }
 
         .verse-card,
         .safe-card {
-            font-size: 14.5px;
-            padding: 14px 15px;
+            font-size: 14px;
+            padding: 13px 14px;
         }
 
         section[data-testid="stSidebar"] {
@@ -224,19 +209,29 @@ st.markdown(
 )
 
 
-st.markdown('<div class="prompt-title">You can ask things like:</div>', unsafe_allow_html=True)
+st.markdown('<div class="prompt-title">🙏 Start here</div>', unsafe_allow_html=True)
 
-sample_questions = [
-    "What does the Bible say about anxiety?",
-    "How should I deal with fear?",
-    "What should I pray when I feel overwhelmed?",
-    "How can I forgive someone who hurt me?",
-]
+button_question = None
 
-cols = st.columns(2)
-for i, question in enumerate(sample_questions):
-    with cols[i % 2]:
-        st.markdown(f'<div class="question-chip">{question}</div>', unsafe_allow_html=True)
+col1, col2 = st.columns(2)
+
+with col1:
+    if st.button("I feel anxious", use_container_width=True):
+        button_question = "I feel anxious about my life. What does the Bible say?"
+
+with col2:
+    if st.button("I feel afraid", use_container_width=True):
+        button_question = "I am afraid. What does the Bible say about fear?"
+
+col3, col4 = st.columns(2)
+
+with col3:
+    if st.button("I feel lost", use_container_width=True):
+        button_question = "I feel lost in life. What guidance does the Bible give?"
+
+with col4:
+    if st.button("I need to forgive", use_container_width=True):
+        button_question = "I am struggling to forgive someone. What does the Bible say?"
 
 
 for message in st.session_state.messages:
@@ -244,7 +239,9 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 
-user_question = st.chat_input("Share what's on your heart...")
+chat_input = st.chat_input("Share what's on your heart...")
+
+user_question = button_question or chat_input
 
 
 if user_question:
