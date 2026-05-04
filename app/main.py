@@ -1,5 +1,13 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from fastapi import Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from fastapi.responses import JSONResponse
+
+
 
 from app.rag import (
     retrieve_context,
@@ -12,6 +20,17 @@ from app.memory import init_db, save_message, get_recent_history
 
 app = FastAPI(title="Bible RAG Chatbot API")
 
+limiter = Limiter(key_func=get_remote_address)
+
+app.state.limiter = limiter
+app.add_middleware(SlowAPIMiddleware)
+
+@app.exception_handler(RateLimitExceeded)
+def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={"message": "Too many requests. Please slow down."},
+    )
 
 class ChatRequest(BaseModel):
     question: str
@@ -32,9 +51,9 @@ def startup_event():
 def home():
     return {"message": "Bible RAG Chatbot API is running"}
 
-
+@limiter.limit("5/minute")
 @app.post("/chat", response_model=ChatResponse)
-def chat(request: ChatRequest):
+def chat(request: ChatRequest, _request: Request):
     history = get_recent_history(request.session_id)
 
     rewritten_query = rewrite_query(request.question, history)
