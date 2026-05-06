@@ -89,6 +89,44 @@ def save_usage_event(session_id: str, question: str) -> None:
     conn.commit()
     conn.close()
 
+def get_recent_usage_events(limit: int = 50):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    # ✅ CREATE TABLE FIRST (this is the fix)
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS usage_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id TEXT NOT NULL,
+            question TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+
+    cursor.execute(
+        """
+        SELECT session_id, question, created_at
+        FROM usage_events
+        ORDER BY id DESC
+        LIMIT ?
+        """,
+        (limit,),
+    )
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [
+        {
+            "session_id": session_id,
+            "question": question,
+            "created_at": created_at,
+        }
+        for session_id, question, created_at in rows
+    ]
+
 
 if __name__ == "__main__":
     init_db()

@@ -15,7 +15,13 @@ from app.rag import (
     rewrite_query,
     rerank_chunks,
 )
-from app.memory import init_db, save_message, get_recent_history, save_usage_event
+from app.memory import (
+    init_db,
+    save_message,
+    get_recent_history,
+    save_usage_event,
+    get_recent_usage_events,
+)
 
 
 app = FastAPI(title="Bible RAG Chatbot API")
@@ -48,6 +54,12 @@ def startup_event():
 
 
 @app.get("/")
+
+@app.get("/admin/usage")
+def usage_report():
+    return {
+        "recent_questions": get_recent_usage_events(limit=50)
+    }
 def home():
     return {"message": "Bible RAG Chatbot API is running"}
 
