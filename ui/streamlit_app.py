@@ -10,6 +10,9 @@ API_URL = "http://127.0.0.1:8000/chat"
 PAYPAL_URL = "https://www.paypal.com/donate/?hosted_button_id=W2EF8WER9XN8A"
 
 
+FREE_QUESTION_LIMIT = 7
+
+
 st.set_page_config(
     page_title="Bible Guidance",
     page_icon="📖",
@@ -86,6 +89,19 @@ st.markdown(
         font-size: 14px;
         margin-top: 16px;
         margin-bottom: 16px;
+        line-height: 1.45;
+    }
+
+    .upgrade-box {
+        text-align: center;
+        background: #eef3ff;
+        border: 1px solid #d6e2ff;
+        border-radius: 14px;
+        padding: 16px;
+        font-size: 14px;
+        margin-top: 16px;
+        margin-bottom: 16px;
+        line-height: 1.45;
     }
 
     .footer-note {
@@ -134,6 +150,9 @@ if "session_id" not in st.session_state:
 if "question_count" not in st.session_state:
     st.session_state.question_count = 0
 
+if "email_joined" not in st.session_state:
+    st.session_state.email_joined = False
+
 
 def call_api(question: str) -> dict:
     response = requests.post(
@@ -148,14 +167,35 @@ def call_api(question: str) -> dict:
     return response.json()
 
 
+def has_reached_free_limit() -> bool:
+    return st.session_state.question_count >= FREE_QUESTION_LIMIT
+
+
+def render_upgrade_box() -> None:
+    st.markdown(
+        f"""
+        <div class="upgrade-box">
+            <strong>🚀 Want more guidance?</strong><br><br>
+            You’ve used your free guidance limit for this session.<br>
+            A premium version with unlimited questions, saved reflections,
+            and daily encouragement is coming soon.<br><br>
+            ❤️ For now, you can
+            <a href="{PAYPAL_URL}" target="_blank">support Bible Guidance here</a>.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def render_support_prompt() -> None:
-    if st.session_state.question_count >= 3:
+    if st.session_state.question_count >= 3 and not has_reached_free_limit():
         st.markdown(
             f"""
             <div class="support-box">
-                ❤️ If Bible Guidance has encouraged you, consider
-                <a href="{PAYPAL_URL}" target="_blank">supporting this ministry</a>
-                so others can receive Scripture-based guidance too.
+                🙏 <strong>This helped you?</strong><br><br>
+                Bible Guidance is kept free for everyone.<br>
+                If it encouraged you today, consider supporting so others can receive guidance too.<br><br>
+                👉 <a href="{PAYPAL_URL}" target="_blank">Support this ministry</a>
             </div>
             """,
             unsafe_allow_html=True,
@@ -163,6 +203,10 @@ def render_support_prompt() -> None:
 
 
 def render_answer(question: str) -> None:
+    if has_reached_free_limit():
+        render_upgrade_box()
+        return
+
     st.session_state.question_count += 1
 
     st.session_state.messages.append(
@@ -259,6 +303,16 @@ You're not alone — ask anything and receive Scripture-based guidance.
 )
 
 
+st.markdown(
+    """
+    <div style="text-align:center; font-size:15px; margin-top:10px; margin-bottom:10px;">
+        👇 Ask your question below to get guidance
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+
 chat_input = st.chat_input("What are you going through?")
 
 
@@ -274,6 +328,17 @@ with st.expander(f"🌅 Daily Encouragement ({today})"):
             try:
                 data = call_api(daily_prompt)
                 st.markdown(data["answer"])
+
+                st.markdown(
+                    f"""
+                    <div class="support-box">
+                        ❤️ If this encouraged you today,
+                        <a href="{PAYPAL_URL}" target="_blank">support this ministry</a>.
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
             except requests.exceptions.RequestException:
                 st.warning("Unable to load today's encouragement. Please try again later.")
 
@@ -315,7 +380,7 @@ if user_question:
     render_answer(user_question)
 
 
-if st.session_state.messages:
+if st.session_state.messages and not has_reached_free_limit():
     st.markdown("Would you like:")
 
     col1, col2, col3 = st.columns(3)
@@ -342,6 +407,21 @@ if st.session_state.messages:
 render_support_prompt()
 
 
+st.markdown("---")
+
+email = st.text_input(
+    "📧 Join the future daily encouragement list",
+    placeholder="Enter your email"
+)
+
+if st.button("Join waitlist", use_container_width=True):
+    if email and "@" in email:
+        st.session_state.email_joined = True
+        st.success("You're on the list. Daily encouragement is coming soon.")
+    else:
+        st.warning("Please enter a valid email address.")
+
+
 st.markdown(
     """
     <p class="footer-note">
@@ -355,7 +435,6 @@ st.markdown(
 
 st.markdown(
     """
----
 🙏 Come back anytime you need guidance or encouragement.
 """
 )
