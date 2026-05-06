@@ -126,6 +126,62 @@ def get_recent_usage_events(limit: int = 50):
         }
         for session_id, question, created_at in rows
     ]
+    
+def get_cached_answer(question: str):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS answer_cache (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            question TEXT UNIQUE NOT NULL,
+            answer TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+
+    cursor.execute(
+        """
+        SELECT answer
+        FROM answer_cache
+        WHERE question = ?
+        """,
+        (question.strip().lower(),),
+    )
+
+    row = cursor.fetchone()
+    conn.close()
+
+    return row[0] if row else None
+
+
+def save_cached_answer(question: str, answer: str) -> None:
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS answer_cache (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            question TEXT UNIQUE NOT NULL,
+            answer TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+
+    cursor.execute(
+        """
+        INSERT OR REPLACE INTO answer_cache (question, answer)
+        VALUES (?, ?)
+        """,
+        (question.strip().lower(), answer),
+    )
+
+    conn.commit()
+    conn.close()
 
 
 if __name__ == "__main__":

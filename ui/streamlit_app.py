@@ -1,11 +1,11 @@
-import os
+import datetime
 import requests
 import streamlit as st
 
 
-API_URL = os.getenv(
-    API_URL = "http://127.0.0.1:8000/chat"
-)
+API_URL = "http://127.0.0.1:8000/chat"
+# For production later, use:
+# API_URL = "https://bible-rag-chatbot-anjl.onrender.com/chat"
 
 PAYPAL_URL = "https://www.paypal.com/donate/?hosted_button_id=W2EF8WER9XN8A"
 
@@ -62,11 +62,12 @@ st.markdown(
         line-height: 1.4;
     }
 
-    .trust-line {
-        text-align: center;
-        color: #777;
-        font-size: 12.5px;
-        margin-bottom: 14px;
+    .daily-box {
+        background: #fff7e6;
+        border: 1px solid #f0dfbd;
+        border-radius: 14px;
+        padding: 14px;
+        margin-bottom: 16px;
     }
 
     .prompt-title {
@@ -131,6 +132,59 @@ if "session_id" not in st.session_state:
     st.session_state.session_id = "default-session"
 
 
+def call_api(question: str) -> dict:
+    response = requests.post(
+        API_URL,
+        json={
+            "question": question,
+            "session_id": st.session_state.session_id,
+        },
+        timeout=90,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
+def render_answer(question: str) -> None:
+    st.session_state.messages.append(
+        {"role": "user", "content": question}
+    )
+
+    with st.chat_message("user"):
+        st.markdown(question)
+
+    with st.chat_message("assistant"):
+        with st.spinner("Finding guidance for you..."):
+            try:
+                data = call_api(question)
+                answer = data["answer"]
+                sources = data.get("sources", [])
+
+            except requests.exceptions.RequestException:
+                answer = (
+                    "I’m sorry, something went wrong while connecting to Bible Guidance. "
+                    "Please try again in a moment."
+                )
+                sources = []
+
+            st.markdown(answer)
+
+            if st.button("⭐ Save this", key=f"save_{len(st.session_state.messages)}"):
+                st.success("Saved feature coming soon.")
+
+            if sources:
+                with st.expander("📚 Scripture passages used"):
+                    for source in sources:
+                        st.markdown(f"**Passage chunk {source['chunk_id']}**")
+                        st.caption(f"Similarity distance: {source['distance']}")
+                        st.write(source["preview"])
+                        st.divider()
+
+    st.session_state.messages.append(
+        {"role": "assistant", "content": answer}
+    )
+
+
 with st.sidebar:
     st.markdown("## 📖 Bible Guidance")
     st.write("Scripture-centered encouragement for everyday life.")
@@ -165,6 +219,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+
 st.markdown(
     """
     <div class="trust-line">
@@ -173,6 +228,35 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+
+st.markdown(
+    """
+Feeling overwhelmed, anxious, or lost?
+
+You're not alone — ask anything and receive Scripture-based guidance.
+"""
+)
+
+
+today = datetime.date.today().strftime("%B %d")
+
+st.markdown('<div class="daily-box">', unsafe_allow_html=True)
+
+st.markdown(f"### 🌅 Daily Encouragement ({today})")
+st.markdown("✨ A short word for today:")
+
+if st.button("Get today's encouragement", use_container_width=True):
+    with st.spinner("Finding encouragement for you..."):
+        daily_prompt = "Give me a short encouraging Bible verse and explanation for today."
+
+        try:
+            data = call_api(daily_prompt)
+            st.markdown(data["answer"])
+        except requests.exceptions.RequestException:
+            st.warning("Unable to load today's encouragement. Please try again later.")
+
+st.markdown('</div>', unsafe_allow_html=True)
 
 
 st.markdown('<div class="prompt-title">Start here:</div>', unsafe_allow_html=True)
@@ -209,58 +293,9 @@ chat_input = st.chat_input("What are you going through?")
 
 user_question = button_question or chat_input
 
-
-def call_api(question: str):
-    response = requests.post(
-        API_URL,
-        json={
-            "question": question,
-            "session_id": st.session_state.session_id,
-        },
-        timeout=90,
-    )
-
-    response.raise_for_status()
-    return response.json()
-
-
 if user_question:
     print("User question:", user_question)
-
-    st.session_state.messages.append(
-        {"role": "user", "content": user_question}
-    )
-
-    with st.chat_message("user"):
-        st.markdown(user_question)
-
-    with st.chat_message("assistant"):
-        with st.spinner("Finding guidance for you..."):
-            try:
-                data = call_api(user_question)
-                answer = data["answer"]
-                sources = data.get("sources", [])
-
-            except requests.exceptions.RequestException:
-                answer = (
-                    "I’m sorry, something went wrong while connecting to Bible Guidance. "
-                    "Please try again in a moment."
-                )
-                sources = []
-
-            st.markdown(answer)
-
-            if sources:
-                with st.expander("📚 Scripture passages used"):
-                    for source in sources:
-                        st.markdown(f"**Passage chunk {source['chunk_id']}**")
-                        st.caption(f"Similarity distance: {source['distance']}")
-                        st.write(source["preview"])
-                        st.divider()
-
-    st.session_state.messages.append(
-        {"role": "assistant", "content": answer}
-    )
+    render_answer(user_question)
 
 
 if st.session_state.messages:
@@ -284,41 +319,7 @@ if st.session_state.messages:
 
     if followup_question:
         print("Follow-up question:", followup_question)
-
-        st.session_state.messages.append(
-            {"role": "user", "content": followup_question}
-        )
-
-        with st.chat_message("user"):
-            st.markdown(followup_question)
-
-        with st.chat_message("assistant"):
-            with st.spinner("Finding guidance for you..."):
-                try:
-                    data = call_api(followup_question)
-                    answer = data["answer"]
-                    sources = data.get("sources", [])
-
-                except requests.exceptions.RequestException:
-                    answer = (
-                        "I’m sorry, something went wrong while connecting to Bible Guidance. "
-                        "Please try again in a moment."
-                    )
-                    sources = []
-
-                st.markdown(answer)
-
-                if sources:
-                    with st.expander("📚 Scripture passages used"):
-                        for source in sources:
-                            st.markdown(f"**Passage chunk {source['chunk_id']}**")
-                            st.caption(f"Similarity distance: {source['distance']}")
-                            st.write(source["preview"])
-                            st.divider()
-
-        st.session_state.messages.append(
-            {"role": "assistant", "content": answer}
-        )
+        render_answer(followup_question)
 
 
 st.markdown(
@@ -340,4 +341,12 @@ st.markdown(
     </p>
     """,
     unsafe_allow_html=True,
+)
+
+
+st.markdown(
+    """
+---
+🙏 Come back anytime you need guidance or encouragement.
+"""
 )
