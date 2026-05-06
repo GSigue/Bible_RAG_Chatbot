@@ -62,12 +62,11 @@ st.markdown(
         line-height: 1.4;
     }
 
-    .daily-box {
-        background: #fff7e6;
-        border: 1px solid #f0dfbd;
-        border-radius: 14px;
-        padding: 14px;
-        margin-bottom: 16px;
+    .trust-line {
+        text-align: center;
+        color: #777;
+        font-size: 12.5px;
+        margin-bottom: 14px;
     }
 
     .prompt-title {
@@ -78,14 +77,15 @@ st.markdown(
         font-size: 15px;
     }
 
-    .donation-box {
+    .support-box {
         text-align: center;
-        background: #fffaf0;
-        border: 1px solid #eee4d4;
+        background: #fff7e6;
+        border: 1px solid #f0dfbd;
         border-radius: 14px;
         padding: 14px;
         font-size: 14px;
-        margin-top: 20px;
+        margin-top: 16px;
+        margin-bottom: 16px;
     }
 
     .footer-note {
@@ -131,6 +131,9 @@ if "messages" not in st.session_state:
 if "session_id" not in st.session_state:
     st.session_state.session_id = "default-session"
 
+if "question_count" not in st.session_state:
+    st.session_state.question_count = 0
+
 
 def call_api(question: str) -> dict:
     response = requests.post(
@@ -145,7 +148,23 @@ def call_api(question: str) -> dict:
     return response.json()
 
 
+def render_support_prompt() -> None:
+    if st.session_state.question_count >= 3:
+        st.markdown(
+            f"""
+            <div class="support-box">
+                ❤️ If Bible Guidance has encouraged you, consider
+                <a href="{PAYPAL_URL}" target="_blank">supporting this ministry</a>
+                so others can receive Scripture-based guidance too.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+
 def render_answer(question: str) -> None:
+    st.session_state.question_count += 1
+
     st.session_state.messages.append(
         {"role": "user", "content": question}
     )
@@ -204,6 +223,7 @@ with st.sidebar:
 
     if st.button("Reset conversation"):
         st.session_state.messages = []
+        st.session_state.question_count = 0
         st.rerun()
 
 
@@ -238,12 +258,11 @@ You're not alone — ask anything and receive Scripture-based guidance.
 """
 )
 
+
 chat_input = st.chat_input("What are you going through?")
 
 
 today = datetime.date.today().strftime("%B %d")
-
-st.markdown('<div class="daily-box">', unsafe_allow_html=True)
 
 with st.expander(f"🌅 Daily Encouragement ({today})"):
     st.markdown("✨ A short word for today:")
@@ -257,8 +276,6 @@ with st.expander(f"🌅 Daily Encouragement ({today})"):
                 st.markdown(data["answer"])
             except requests.exceptions.RequestException:
                 st.warning("Unable to load today's encouragement. Please try again later.")
-
-st.markdown('</div>', unsafe_allow_html=True)
 
 
 st.markdown('<div class="prompt-title">Start here:</div>', unsafe_allow_html=True)
@@ -322,12 +339,7 @@ if st.session_state.messages:
         render_answer(followup_question)
 
 
-st.markdown("---")
-
-st.markdown(
-    f'❤️ <a href="{PAYPAL_URL}" target="_blank">Support this ministry</a>',
-    unsafe_allow_html=True
-)
+render_support_prompt()
 
 
 st.markdown(
