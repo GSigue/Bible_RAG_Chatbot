@@ -43,7 +43,7 @@ st.markdown(
 
     .hero {
         text-align: center;
-        padding: 8px 6px 10px 6px;
+        padding: 4px 4px 6px 4px;
         margin-bottom: 6px;
     }
 
@@ -238,23 +238,25 @@ You're not alone — ask anything and receive Scripture-based guidance.
 """
 )
 
+chat_input = st.chat_input("What are you going through?")
+
 
 today = datetime.date.today().strftime("%B %d")
 
 st.markdown('<div class="daily-box">', unsafe_allow_html=True)
 
-st.markdown(f"### 🌅 Daily Encouragement ({today})")
-st.markdown("✨ A short word for today:")
+with st.expander(f"🌅 Daily Encouragement ({today})"):
+    st.markdown("✨ A short word for today:")
 
-if st.button("Get today's encouragement", use_container_width=True):
-    with st.spinner("Finding encouragement for you..."):
-        daily_prompt = "Give me a short encouraging Bible verse and explanation for today."
+    if st.button("Get today's encouragement", use_container_width=True):
+        with st.spinner("Finding encouragement for you..."):
+            daily_prompt = "Give me a short encouraging Bible verse and explanation for today."
 
-        try:
-            data = call_api(daily_prompt)
-            st.markdown(data["answer"])
-        except requests.exceptions.RequestException:
-            st.warning("Unable to load today's encouragement. Please try again later.")
+            try:
+                data = call_api(daily_prompt)
+                st.markdown(data["answer"])
+            except requests.exceptions.RequestException:
+                st.warning("Unable to load today's encouragement. Please try again later.")
 
 st.markdown('</div>', unsafe_allow_html=True)
 
@@ -289,8 +291,6 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 
-chat_input = st.chat_input("What are you going through?")
-
 user_question = button_question or chat_input
 
 if user_question:
@@ -322,14 +322,11 @@ if st.session_state.messages:
         render_answer(followup_question)
 
 
+st.markdown("---")
+
 st.markdown(
-    f"""
-    <div class="donation-box">
-        ❤️ If Bible Guidance helped you,
-        <a href="{PAYPAL_URL}" target="_blank">support this ministry here</a>.
-    </div>
-    """,
-    unsafe_allow_html=True,
+    f'❤️ <a href="{PAYPAL_URL}" target="_blank">Support this ministry</a>',
+    unsafe_allow_html=True
 )
 
 
