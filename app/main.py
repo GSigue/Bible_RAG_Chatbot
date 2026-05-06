@@ -15,7 +15,7 @@ from app.rag import (
     rewrite_query,
     rerank_chunks,
 )
-from app.memory import init_db, save_message, get_recent_history
+from app.memory import init_db, save_message, get_recent_history, save_usage_event
 
 
 app = FastAPI(title="Bible RAG Chatbot API")
@@ -55,6 +55,8 @@ def home():
 @app.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest, _request: Request):
     history = get_recent_history(request.session_id)
+    
+    save_usage_event(request.session_id, request.question)
 
     rewritten_query = rewrite_query(request.question, history)
 

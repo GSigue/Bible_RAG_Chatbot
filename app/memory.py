@@ -63,6 +63,32 @@ def get_recent_history(session_id: str, limit: int = 6) -> List[Dict[str, str]]:
 
     return [{"role": role, "content": content} for role, content in rows]
 
+def save_usage_event(session_id: str, question: str) -> None:
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS usage_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id TEXT NOT NULL,
+            question TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+
+    cursor.execute(
+        """
+        INSERT INTO usage_events (session_id, question)
+        VALUES (?, ?)
+        """,
+        (session_id, question),
+    )
+
+    conn.commit()
+    conn.close()
+
 
 if __name__ == "__main__":
     init_db()
