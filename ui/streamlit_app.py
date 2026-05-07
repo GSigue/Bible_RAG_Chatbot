@@ -166,6 +166,18 @@ def call_api(question: str) -> dict:
     response.raise_for_status()
     return response.json()
 
+def join_waitlist(email: str) -> bool:
+    waitlist_url = API_URL.replace("/chat", "/waitlist")
+
+    response = requests.post(
+        waitlist_url,
+        json={"email": email},
+        timeout=30,
+    )
+
+    response.raise_for_status()
+    return True
+
 
 def has_reached_free_limit() -> bool:
     return st.session_state.question_count >= FREE_QUESTION_LIMIT
@@ -416,8 +428,12 @@ email = st.text_input(
 
 if st.button("Join waitlist", use_container_width=True):
     if email and "@" in email:
-        st.session_state.email_joined = True
-        st.success("You're on the list. Daily encouragement is coming soon.")
+        try:
+            join_waitlist(email)
+            st.session_state.email_joined = True
+            st.success("You're on the list. Daily encouragement is coming soon.")
+        except requests.exceptions.RequestException:
+            st.error("Something went wrong. Please try again.")
     else:
         st.warning("Please enter a valid email address.")
 

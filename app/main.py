@@ -21,6 +21,8 @@ from app.memory import (
     get_recent_usage_events,
     get_cached_answer,
     save_cached_answer,
+    save_waitlist_email,
+    get_waitlist_emails,
 )
 
 
@@ -51,6 +53,9 @@ class ChatResponse(BaseModel):
     answer: str
     sources: list[dict]
     cached: bool = False
+    
+class WaitlistRequest(BaseModel):
+    email: str
 
 
 @app.on_event("startup")
@@ -122,12 +127,23 @@ def chat(request: ChatRequest, request_obj: Request):
         "cached": False,
     }
 
+@app.post("/waitlist")
+def join_waitlist(request: WaitlistRequest):
+    email = request.email.strip().lower()
 
+    if "@" not in email or "." not in email:
+        raise HTTPException(status_code=400, detail="Invalid email address")
+
+    save_waitlist_email(email)
+
+    return {"message": "Email added to waitlist"}
+    
 @app.get("/admin/usage")
 def usage_report(x_admin_key: str | None = Header(default=None)):
     if x_admin_key != ADMIN_API_KEY:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     return {
-        "recent_questions": get_recent_usage_events(limit=50)
+        "recent_questions": get_recent_usage_events(limit=50),
+        "waitlist_emails": get_waitlist_emails(limit=100),
     }
