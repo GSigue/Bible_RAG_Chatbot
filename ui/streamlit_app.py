@@ -3,9 +3,9 @@ import requests
 import streamlit as st
 
 
-API_URL = "http://127.0.0.1:8000/chat"
+# API_URL = "http://127.0.0.1:8000/chat"
 # For production later, use:
-# API_URL = "https://bible-rag-chatbot-anjl.onrender.com/chat"
+API_URL = "https://bible-rag-chatbot-anjl.onrender.com/chat"
 
 PAYPAL_URL = "https://www.paypal.com/donate/?hosted_button_id=W2EF8WER9XN8A"
 
