@@ -2,12 +2,52 @@ import datetime
 import requests
 import streamlit as st
 
+PAYPAL_BUTTON = """
+<div style="text-align:center;">
+  <style>
+    .pp-HJ8EYBHJK77M2{
+      text-align:center;
+      border:none;
+      border-radius:0.25rem;
+      min-width:11.625rem;
+      padding:0 2rem;
+      height:2.625rem;
+      font-weight:bold;
+      background-color:#FFD140;
+      color:#000000;
+      font-family:"Helvetica Neue",Arial,sans-serif;
+      font-size:1rem;
+      line-height:1.25rem;
+      cursor:pointer;
+    }
+  </style>
 
-# API_URL = "http://127.0.0.1:8000/chat"
+  <form action="https://www.paypal.com/ncp/payment/HJ8EYBHJK77M2"
+        method="post"
+        target="_blank"
+        style="display:inline-grid;justify-items:center;align-content:start;gap:0.5rem;">
+
+    <input class="pp-HJ8EYBHJK77M2"
+           type="submit"
+           value="Support Our Ministry" />
+
+    <img src="https://www.paypalobjects.com/images/Debit_Credit_APM.svg"
+         alt="cards" />
+
+    <section style="font-size:0.75rem;">
+      Powered by
+      <img src="https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-wordmark-color.svg"
+           alt="paypal"
+           style="height:0.875rem;vertical-align:middle;"/>
+    </section>
+  </form>
+</div>
+"""
+# API_URL = "https://bibleragchatbot-production.up.railway.app/chat"
 # For production later, use:
-API_URL = "https://bible-rag-chatbot-anjl.onrender.com/chat"
+#API_URL = "https://bible-rag-chatbot-anjl.onrender.com/chat"
 
-PAYPAL_URL = "https://www.paypal.com/donate/?hosted_button_id=W2EF8WER9XN8A"
+API_URL = "https://api.bibleguidance.ai/chat"
 
 
 FREE_QUESTION_LIMIT = 7
@@ -192,7 +232,7 @@ def render_upgrade_box() -> None:
             A premium version with unlimited questions, saved reflections,
             and daily encouragement is coming soon.<br><br>
             ❤️ For now, you can
-            <a href="{PAYPAL_URL}" target="_blank">support Bible Guidance here</a>.
+            <a href="https://www.paypal.com/ncp/payment/HJ8EYBHJK77M2" target="_blank">support Bible Guidance here</a>.
         </div>
         """,
         unsafe_allow_html=True,
@@ -207,7 +247,7 @@ def render_support_prompt() -> None:
                 🙏 <strong>This helped you?</strong><br><br>
                 Bible Guidance is kept free for everyone.<br>
                 If it encouraged you today, consider supporting so others can receive guidance too.<br><br>
-                👉 <a href="{PAYPAL_URL}" target="_blank">Support this ministry</a>
+                👉 <a href="https://www.paypal.com/ncp/payment/HJ8EYBHJK77M2" target="_blank">Support this ministry</a>
             </div>
             """,
             unsafe_allow_html=True,
@@ -268,7 +308,7 @@ with st.sidebar:
 
     st.markdown("### ❤️ Support this ministry")
     st.write("Help make Scripture-based encouragement available to more people.")
-    st.markdown(f"[Support with PayPal]({PAYPAL_URL})")
+    st.markdown(PAYPAL_BUTTON, unsafe_allow_html=True)
 
     st.divider()
 
@@ -345,7 +385,7 @@ with st.expander(f"🌅 Daily Encouragement ({today})"):
                     f"""
                     <div class="support-box">
                         ❤️ If this encouraged you today,
-                        <a href="{PAYPAL_URL}" target="_blank">support this ministry</a>.
+                        <a href="https://www.paypal.com/ncp/payment/HJ8EYBHJK77M2" target="_blank">support this ministry</a>.
                     </div>
                     """,
                     unsafe_allow_html=True,
